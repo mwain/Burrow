@@ -61,7 +61,7 @@ func TestHttpServer_handlePrometheusMetrics(t *testing.T) {
 			Cluster:  request.Cluster,
 			Group:    request.Group,
 			Status:   protocol.StatusOK,
-			Complete: 1.0,
+			Complete: 0.9,
 			Partitions: []*protocol.PartitionStatus{
 				{
 					Topic:      "testtopic",
@@ -97,11 +97,9 @@ func TestHttpServer_handlePrometheusMetrics(t *testing.T) {
 					Topic:      "incomplete",
 					Partition:  0,
 					Status:     protocol.StatusOK,
-					CurrentLag: 0,
-					Complete:   0.2,
-					End: &protocol.ConsumerOffset{
-						Offset: 5335,
-					},
+					CurrentLag: 1,
+					Complete:   0.1,
+					End:        nil,
 				},
 			},
 			TotalPartitions: 2134,
@@ -151,6 +149,8 @@ func TestHttpServer_handlePrometheusMetrics(t *testing.T) {
 	assert.Contains(t, promExp, `burrow_kafka_topic_partition_offset{cluster="testcluster",partition="1",topic="testtopic"} 5566`)
 	assert.Contains(t, promExp, `burrow_kafka_topic_partition_offset{cluster="testcluster",partition="0",topic="testtopic1"} 54`)
 
-	assert.NotContains(t, promExp, `burrow_kafka_consumer_partition_lag{cluster="testcluster",consumer_group="testgroup",partition="0",topic="incomplete"} 0`)
+	assert.Contains(t, promExp, `burrow_kafka_consumer_partition_lag{cluster="testcluster",consumer_group="testgroup",partition="0",topic="incomplete"} 1`)
+	assert.NotContains(t, promExp, `burrow_kafka_consumer_current_offset{cluster="testcluster",consumer_group="testgroup",partition="0",topic="incomplete"}`)
+
 	assert.NotContains(t, promExp, "testgroup2")
 }
